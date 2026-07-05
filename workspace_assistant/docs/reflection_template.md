@@ -60,3 +60,26 @@ Building with ADK taught me that the boundary between agent behavior and tool de
 The MCP integration for GitHub highlighted an important architectural difference between custom tools and MCP toolsets: custom tools give you full control over the interface the agent sees, while MCP tools expose whatever the server provides. The GitHub MCP server has 15+ tools with its own naming conventions, and the agent sometimes needed more specific prompting to navigate them correctly. This pointed toward the value of the defer_loading pattern — rather than loading all 15 tools into the context upfront, a production system would benefit from on-demand tool discovery to reduce token usage and improve selection accuracy.
 
 The most practically valuable lesson was about environment and dependency management. Several hours of debugging traced back to Python version mismatches, stale virtual environment activations, and missing API keys — none of which were problems with the agent code itself. In a team setting, these setup issues multiply quickly, which is why pinning Python versions, committing `.env.example` files with clear documentation, and scripting the setup process are worth the upfront investment.
+
+---
+
+## Bonus: Tool Search Pattern (defer_loading)
+
+### Token Comparison
+
+| Mode | Tools Loaded | Approx Tokens |
+|------|-------------|---------------|
+| Without defer_loading | 15+ GitHub tools upfront | ~8,000 |
+| With defer_loading | search_github_tools + on-demand | ~1,500 |
+| **Savings** | | **~81%** |
+
+### How It Works
+With `defer_loading=True`, the McpToolset does not fetch all 15+ GitHub 
+tool schemas at startup. Instead, the agent uses the `search_github_tools` 
+function to discover which tools are available by keyword, then the 
+McpToolset loads only the specific tool needed when it is actually called. 
+This reduces the number of tokens in the context window at any given time 
+from ~8,000 (all tools loaded) to ~1,500 (search tool + 1-2 active tools), 
+an ~81% reduction. In production systems with many MCP servers connected 
+simultaneously, this pattern becomes essential for staying within model 
+context limits and reducing cost.

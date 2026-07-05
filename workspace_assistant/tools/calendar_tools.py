@@ -1,13 +1,17 @@
 """
 Option A: Calendar Assistant Tools
-
 Implements 5 tools for Google Calendar operations.
 """
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from .auth import get_calendar_service
+from auth import get_calendar_service
 
 
 def list_upcoming_events(max_results: int = 10, days_ahead: int = 7) -> dict:
